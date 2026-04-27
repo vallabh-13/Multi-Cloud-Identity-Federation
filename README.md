@@ -8,13 +8,17 @@ A production-pattern lab that provisions three Kubernetes clusters across **Azur
 
 ---
 
+ >**Note on the tenant domain:** Throughout this project the UPN suffix `mahadikvallabh587gmail.onmicrosoft.com` is used. It's long because Microsoft auto-generates this name from your sign-up email when you use the free tier - no custom domain purchased. You can replace it with any domain you own (e.g. `hybridcorp.com`), and everywhere you see `mahadikvallabh587gmail.onmicrosoft.com` in this guide simply substitute your own domain. I kept this suffix the same across all steps so the screenshots and commands stay consistent for making this a free project mostly. 
+
+---
+
 ## Demo
 
-| Azure AKS | AWS EKS | GCP GKE |
+| Azure AKS (Read-only Access) | AWS EKS (Admin Access) | GCP GKE(Outsider) |
 |---|---|---|
 | ![Azure Dashboard](screenshot/AKS.png) | ![AWS Dashboard](screenshot/EKS.png) | ![GCP Dashboard](screenshot/GCP.png) |
 
-Each dashboard shows the authenticated user's identity, their RBAC role (Admin or Developer), and which cloud the app is running on - all controlled by a single Active Directory group membership.
+Each dashboard shows the authenticated user's identity, their RBAC role (Admin or Developer or outsider), and which cloud the app is running on - all controlled by a single Active Directory group membership.
 
 ---
 
