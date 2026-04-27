@@ -72,5 +72,8 @@ resource "azurerm_kubernetes_cluster" "main" {
     tenant_id          = var.entra_tenant_id
   }
 
+  # AKS has no deletion_protection flag — lifecycle { prevent_destroy = false } is the
+  # default and no override is needed. terraform destroy works cleanly for this resource.
+
   tags = var.tags
 }

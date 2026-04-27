@@ -687,17 +687,91 @@ Entra ID's app registration UI blocks HTTP redirect URIs (requiring HTTPS or loc
 
 ## Cleanup
 
-```powershell
-# Destroy all cloud infrastructure
-cd hybrid-cloud-identity
+### Automated Cleanup
+```bash
+terraform destroy -auto-approve
+```
+
+This should cleanly destroy all resources. The Terraform files include preventive fixes for common destroy issues.
+
+### Manual Cleanup (if terraform destroy fails)
+
+**GCP — "deletion_protection is set to true"**
+This has been fixed in the Terraform config (deletion_protection = false). If you still hit this:
+1. GCP Console → Kubernetes Engine → Clusters → click cluster → Edit → disable deletion protection → Save
+2. Then delete the cluster from console, or re-run terraform destroy
+
+**AWS — "subnet has dependencies and cannot be deleted"**
+This happens when Kubernetes LoadBalancer services create ELBs outside Terraform's management. The Terraform config now includes an auto-cleanup provisioner, but if it fails:
+```bash
+# Find and delete lingering load balancers
+aws elb describe-load-balancers --region us-east-1 --query "LoadBalancerDescriptions[].LoadBalancerName" --output text
+aws elb delete-load-balancer --load-balancer-name NAME --region us-east-1
+
+# Wait 2-3 minutes for ENIs to release, then retry
 terraform destroy -auto-approve
 
-# Delete GCP workload identity pool
-gcloud iam workload-identity-pools delete entra-id-pool --location="global" --project="your-project-id"
-
-# Delete Entra ID app registrations (Azure portal → App registrations → delete)
-# Delete AWS IAM roles and identity provider (AWS Console → IAM)
+# Nuclear option — delete VPC from console
+# AWS Console → VPC → select VPC → Actions → Delete VPC (force-deletes everything)
 ```
+
+**AWS — "Cannot detach Internet Gateway — mapped public addresses"**
+Same root cause as above. Delete the ELBs first, wait for Elastic IPs to release, then retry.
+
+**Terraform state out of sync after manual deletion**
+If you manually deleted resources through the console:
+```bash
+# Remove the module from state so Terraform stops tracking it
+terraform state rm module.aws
+terraform state rm module.gcp
+terraform state rm module.azure
+```
+
+### Cloud-Specific Resource Cleanup
+Resources created outside Terraform that need manual deletion:
+
+**Azure:**
+```bash
+# Delete Entra ID app registrations
+az ad app list --query "[?contains(displayName,'Hybrid') || contains(displayName,'GCP')].{name:displayName, id:appId}" -o table
+az ad app delete --id APP-ID
+
+# Delete enterprise apps (AWS IAM Identity Center, etc.)
+# Portal: Entra ID → Enterprise applications → delete manually
+```
+
+**AWS:**
+```bash
+# Delete SAML provider
+aws iam delete-saml-provider --saml-provider-arn arn:aws:iam::ACCOUNT-ID:saml-provider/EntraID
+
+# Delete IAM roles
+aws iam detach-role-policy --role-name EntraID-Cloud-Admins --policy-arn arn:aws:iam::aws:policy/AdministratorAccess
+aws iam delete-role --role-name EntraID-Cloud-Admins
+aws iam detach-role-policy --role-name EntraID-Cloud-Developers --policy-arn arn:aws:iam::aws:policy/ReadOnlyAccess
+aws iam delete-role --role-name EntraID-Cloud-Developers
+```
+
+**GCP:**
+```bash
+# Delete workload identity pool
+gcloud iam workload-identity-pools delete entra-id-pool --location="global" --project="PROJECT-ID" --quiet
+```
+
+### Verify Everything is Deleted
+```bash
+# Azure
+az group list --query "[].name" -o tsv
+
+# AWS
+aws eks list-clusters --region us-east-1
+aws ec2 describe-vpcs --region us-east-1 --query "Vpcs[].VpcId" --output text
+
+# GCP
+gcloud container clusters list --project PROJECT-ID
+gcloud compute instances list --project PROJECT-ID
+```
+All should return empty.
 
 ---
 

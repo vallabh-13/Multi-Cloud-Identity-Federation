@@ -25,6 +25,10 @@ resource "aws_vpc" "main" {
 resource "aws_internet_gateway" "main" {
   vpc_id = aws_vpc.main.id
   tags   = merge(var.tags, { Name = "${local.name_prefix}-igw" })
+
+  # Must be destroyed after EKS cluster (and its LB cleanup provisioner) so
+  # mapped public addresses from ELBs are gone before IGW detaches.
+  depends_on = [aws_eks_cluster.main]
 }
 
 # ── Public Subnets (NAT gateway + load balancers) ─────────────────────────────
@@ -41,6 +45,10 @@ resource "aws_subnet" "public" {
     Name                     = "${local.name_prefix}-public-${count.index + 1}"
     "kubernetes.io/role/elb" = "1"
   })
+
+  # Destroyed after EKS cluster so the LB cleanup provisioner runs first,
+  # releasing ENIs that Kubernetes ELBs attached to these public subnets.
+  depends_on = [aws_eks_cluster.main]
 }
 
 # ── Private Subnets (EKS nodes live here) ─────────────────────────────────────
@@ -69,7 +77,8 @@ resource "aws_nat_gateway" "main" {
   subnet_id     = aws_subnet.public[0].id
   tags          = merge(var.tags, { Name = "${local.name_prefix}-nat" })
 
-  depends_on = [aws_internet_gateway.main]
+  # Destroyed after EKS cluster to ensure all ELB resources are released first.
+  depends_on = [aws_internet_gateway.main, aws_eks_cluster.main]
 }
 
 # ── Route Tables ───────────────────────────────────────────────────────────────
@@ -229,6 +238,22 @@ resource "aws_eks_cluster" "main" {
   tags = var.tags
 
   depends_on = [aws_iam_role_policy_attachment.eks_cluster_policy]
+
+  # Delete ELBs that Kubernetes created outside Terraform before network teardown.
+  # Without this, subnet/IGW deletion fails because ENIs from those ELBs remain attached.
+  # var.* is forbidden in destroy provisioners; region is extracted from self.arn instead.
+  provisioner "local-exec" {
+    when    = destroy
+    command = <<-EOT
+      echo "Cleaning up EKS-managed load balancers..."
+      REGION=$(echo "${self.arn}" | cut -d: -f4)
+      for lb in $(aws elb describe-load-balancers --region $REGION --query "LoadBalancerDescriptions[?VPCId=='${self.vpc_config[0].vpc_id}'].LoadBalancerName" --output text 2>/dev/null); do
+        aws elb delete-load-balancer --load-balancer-name $lb --region $REGION 2>/dev/null
+      done
+      echo "Waiting for ENIs to release..."
+      sleep 60
+    EOT
+  }
 }
 
 # ── OIDC Provider (enables K8s RBAC tokens to be validated against Entra ID) ──

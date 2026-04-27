@@ -114,6 +114,9 @@ resource "google_container_cluster" "main" {
     channel = "STABLE"
   }
 
+  # Lab project — deletion protection blocks terraform destroy; disable it.
+  deletion_protection = false
+
   resource_labels = local.labels
 }
 
