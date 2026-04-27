@@ -2,7 +2,7 @@
 
 A production-pattern lab that provisions three Kubernetes clusters across **Azure AKS**, **AWS EKS**, and **GCP GKE** - all unified under a single identity plane via **Microsoft Entra ID**. Users authenticate once with their Active Directory credentials and are granted role-based access across all three clusters automatically, with no per-cloud password or token management.
 
-> **The Problem:** Enterprises with multiple cloud providers end up maintaining separate identity systems for each platform. Users juggle multiple passwords, security teams can't enforce consistent policies, and when someone leaves the company, IT must revoke access on every platform individually — a process that frequently fails.
+> **The Problem:** Enterprises with multiple cloud providers end up maintaining separate identity systems for each platform. Users juggle multiple passwords, security teams can't enforce consistent policies, and when someone leaves the company, IT must revoke access on every platform individually - a process that frequently fails.
 
 > **The Solution:** A hub identity federation architecture. On-premises Active Directory is the single source of truth. Microsoft Entra ID acts as the central identity hub, syncing users via Entra Connect. From Entra ID, identity is federated outward to Kubernetes clusters on Azure (native), AWS (SAML), and GCP (OIDC). Each cluster enforces RBAC using AD security group memberships. One identity, three clouds, zero duplicate accounts.
 
@@ -12,7 +12,7 @@ A production-pattern lab that provisions three Kubernetes clusters across **Azur
 
 | Azure AKS | AWS EKS | GCP GKE |
 |---|---|---|
-| ![Azure Dashboard](screenshots/AKS.png) | ![AWS Dashboard](screenshots/EKS.png) | ![GCP Dashboard](screenshots/GCP.png) |
+| ![Azure Dashboard](screenshot/AKS.png) | ![AWS Dashboard](screenshot/EKS.png) | ![GCP Dashboard](screenshot/GCP.png) |
 
 Each dashboard shows the authenticated user's identity, their RBAC role (Admin or Developer), and which cloud the app is running on - all controlled by a single Active Directory group membership.
 
@@ -20,37 +20,37 @@ Each dashboard shows the authenticated user's identity, their RBAC role (Admin o
 
 ## Architecture Diagram 
 
-[Architecture Diagram](screenshots/arch.png)
+![Architecture Diagram](screenshot/arch.png)
 
 
 ## Table of Contents
 
 - [Prerequisites](#prerequisites)
 - [Folder Structure](#folder-structure)
-- [Phase 1 — On-Premises Setup](#phase-1--on-premises-setup)
+- [Phase 1 - On-Premises Setup](#phase-1--on-premises-setup)
   - [Step 1: Hyper-V Network Adapters](#step-1-hyper-v-network-adapters)
   - [Step 2: Domain Controller (DC01)](#step-2-domain-controller-dc01)
-  - [Step 3: Active Directory — OUs, Groups, Users](#step-3-active-directory--ous-groups-users)
+  - [Step 3: Active Directory - OUs, Groups, Users](#step-3-active-directory--ous-groups-users)
   - [Step 4: DHCP](#step-4-dhcp)
   - [Step 5: Member Server (MS01)](#step-5-member-server-ms01)
   - [Step 6: Windows Client (CLIENT01)](#step-6-windows-client-client01)
-- [Phase 2 — Azure Tenant and Entra Connect](#phase-2--azure-tenant-and-entra-connect)
+- [Phase 2 - Azure Tenant and Entra Connect](#phase-2--azure-tenant-and-entra-connect)
   - [Step 7: Azure Account and Tenant](#step-7-azure-account-and-tenant)
   - [Step 8: UPN Suffix Configuration](#step-8-upn-suffix-configuration)
   - [Step 9: Install Entra Connect](#step-9-install-entra-connect)
   - [Step 10: Verify Sync](#step-10-verify-sync)
-- [Phase 3 — Cloud Infrastructure with Terraform](#phase-3--cloud-infrastructure-with-terraform)
+- [Phase 3 - Cloud Infrastructure with Terraform](#phase-3--cloud-infrastructure-with-terraform)
   - [Step 11: Install Prerequisites](#step-11-install-prerequisites)
   - [Step 12: Configure Terraform Variables](#step-12-configure-terraform-variables)
   - [Step 13: Deploy All Three Clouds](#step-13-deploy-all-three-clouds)
   - [Step 14: Connect kubectl to All Clusters](#step-14-connect-kubectl-to-all-clusters)
-- [Phase 4 — Kubernetes App, RBAC, and OAuth2 Proxy](#phase-4--kubernetes-app-rbac-and-oauth2-proxy)
+- [Phase 4 - Kubernetes App, RBAC, and OAuth2 Proxy](#phase-4--kubernetes-app-rbac-and-oauth2-proxy)
   - [Step 15: Configure Entra ID App Registration](#step-15-configure-entra-id-app-registration)
   - [Step 16: AWS SAML Federation](#step-16-aws-saml-federation)
   - [Step 17: GCP Workload Identity Federation](#step-17-gcp-workload-identity-federation)
   - [Step 18: Deploy RBAC and App](#step-18-deploy-rbac-and-app)
   - [Step 19: Deploy OAuth2 Proxy with TLS](#step-19-deploy-oauth2-proxy-with-tls)
-- [Phase 5 — Testing](#phase-5--testing)
+- [Phase 5 - Testing](#phase-5--testing)
 - [Key Learnings](#key-learnings)
 - [Technology Stack](#technology-stack)
 - [Networking Summary](#networking-summary)
@@ -67,9 +67,9 @@ Each dashboard shows the authenticated user's identity, their RBAC role (Admin o
 - **GCP** account ($300 free credits for 90 days)
 - Installed on your local machine:
   - [Terraform](https://developer.hashicorp.com/terraform/downloads) >= 1.5
-  - [AWS CLI](https://aws.amazon.com/cli/) — `aws configure`
-  - [Azure CLI](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli) — `az login`
-  - [Google Cloud CLI](https://cloud.google.com/sdk/docs/install) — `gcloud auth login`
+  - [AWS CLI](https://aws.amazon.com/cli/) - `aws configure`
+  - [Azure CLI](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli) - `az login`
+  - [Google Cloud CLI](https://cloud.google.com/sdk/docs/install) - `gcloud auth login`
   - [kubectl](https://kubernetes.io/docs/tasks/tools/)
   - [kubelogin](https://github.com/Azure/kubelogin) (for AKS Entra ID auth)
   - [gke-gcloud-auth-plugin](https://cloud.google.com/kubernetes-engine/docs/how-to/cluster-access-for-kubectl#install_plugin) (for GKE auth)
@@ -81,7 +81,7 @@ Each dashboard shows the authenticated user's identity, their RBAC role (Admin o
 ```
 hybrid-cloud-identity/
 │
-├── main.tf                    # Root module — calls aws, azure, gcp modules
+├── main.tf                    # Root module - calls aws, azure, gcp modules
 ├── providers.tf               # Terraform provider config (AWS, AzureRM, Google, TLS)
 ├── variables.tf               # All input variables (regions, tenant IDs, project IDs)
 ├── outputs.tf                 # Cluster names, endpoints, kubeconfig commands
@@ -117,13 +117,13 @@ hybrid-cloud-identity/
 
 ---
 
-## Phase 1 — On-Premises Setup
+## Phase 1 - On-Premises Setup
 
 ### Step 1: Hyper-V Network Adapters
 
-> **NOTE:** Each VM requires **two network adapters** — one on the NAT switch for internet access and one on the Private switch for internal domain traffic. Initially, only one adapter was attached per VM. Adding the second adapter requires shutting down each VM, adding hardware through Hyper-V settings, and configuring static IPs on the private adapter while leaving the NAT adapter on DHCP.
+> **NOTE:** Each VM requires **two network adapters** - one on the NAT switch for internet access and one on the Private switch for internal domain traffic. Initially, only one adapter was attached per VM. Adding the second adapter requires shutting down each VM, adding hardware through Hyper-V settings, and configuring static IPs on the private adapter while leaving the NAT adapter on DHCP.
 
-**Why two adapters?** This mirrors real enterprise network segmentation. Internal domain traffic (AD authentication, DNS, DHCP) stays on the private network. Internet traffic (cloud sync, browser access) goes through the NAT adapter. Companies do this with VLANs and firewalls — your lab replicates the same principle with two virtual switches.
+**Why two adapters?** This mirrors real enterprise network segmentation. Internal domain traffic (AD authentication, DNS, DHCP) stays on the private network. Internet traffic (cloud sync, browser access) goes through the NAT adapter. Companies do this with VLANs and firewalls - your lab replicates the same principle with two virtual switches.
 
 For each VM (DC01, MS01, CLIENT01):
 
@@ -152,7 +152,7 @@ ipconfig /all
 Rename-NetAdapter -Name "Ethernet 3" -NewName "NAT"
 Rename-NetAdapter -Name "Ethernet 4" -NewName "Private"
 ```
-> Adapter names may differ — check your `ipconfig /all` output and adjust.
+> Adapter names may differ - check your `ipconfig /all` output and adjust.
 
 **Set static IP on Private adapter:**
 ```powershell
@@ -176,7 +176,7 @@ Install-WindowsFeature AD-Domain-Services -IncludeManagementTools
 ```powershell
 Install-ADDSForest -DomainName "corp.local" -DomainNetBIOSName "CORP" -InstallDns:$true -Force:$true
 ```
-- It will ask for a Safe Mode Administrator Password — pick something memorable
+- It will ask for a Safe Mode Administrator Password - pick something memorable
 - The server reboots automatically
 - After reboot, login changes to `CORP\Administrator`
 
@@ -188,7 +188,7 @@ You should see it resolve to 10.10.0.10.
 
 You can also verify in the GUI: Start → type `dnsmgmt.msc` → Expand DC01 → Forward Lookup Zones → you should see `corp.local` with A records and SRV records.
 
-### Step 3: Active Directory — OUs, Groups, Users
+### Step 3: Active Directory - OUs, Groups, Users
 
 On DC01, open **Active Directory Users and Computers** (`dsa.msc`) or use PowerShell:
 
@@ -265,7 +265,7 @@ After sysprep/OOBE, configure networking:
 Rename-NetAdapter -Name "Ethernet 3" -NewName "NAT"
 Rename-NetAdapter -Name "Ethernet 4" -NewName "Private"
 
-# Static IP on private adapter — no gateway
+# Static IP on private adapter - no gateway
 New-NetIPAddress -InterfaceAlias "Private" -IPAddress 10.10.0.11 -PrefixLength 16
 Set-DnsClientServerAddress -InterfaceAlias "Private" -ServerAddresses 10.10.0.10
 
@@ -284,7 +284,7 @@ After reboot, log in as `CORP\Administrator`.
 Rename-NetAdapter -Name "Ethernet 3" -NewName "NAT"
 Rename-NetAdapter -Name "Ethernet 4" -NewName "Private"
 
-# Client uses DHCP — just set DNS to DC01
+# Client uses DHCP - just set DNS to DC01
 Set-DnsClientServerAddress -InterfaceAlias "Private" -ServerAddresses 10.10.0.10
 
 # Join domain
@@ -302,11 +302,11 @@ CLIENT01 ✓   → Domain joined, test workstation (DHCP)
 
 ---
 
-## Phase 2 — Azure Tenant and Entra Connect
+## Phase 2 - Azure Tenant and Entra Connect
 
 ### Step 7: Azure Account and Tenant
 
-1. Go to [azure.microsoft.com/free](https://azure.microsoft.com/en-us/free/) — use a **personal email** (not a school email, as university tenants may restrict your admin capabilities)
+1. Go to [azure.microsoft.com/free](https://azure.microsoft.com/en-us/free/) - use a **personal email** (not a school email, as university tenants may restrict your admin capabilities)
 2. Create a pay-as-you-go or free trial subscription
 3. Go to [entra.microsoft.com](https://entra.microsoft.com) → note your tenant domain (e.g., `YourName.onmicrosoft.com`)
 
@@ -351,11 +351,11 @@ Set-ADUser -Identity mike -UserPrincipalName "mike@YourTenant.onmicrosoft.com"
 Get-ADUser -Filter * -SearchBase "OU=Users,OU=HybridCloud,DC=corp,DC=local" | Select Name, UserPrincipalName
 ```
 
-> **Why do this?** Entra ID doesn't know what `corp.local` is — it's a private, non-routable domain. The cloud UPN suffix tells Entra Connect how to map on-prem users to cloud identities. John can still log in locally as `CORP\john`. The UPN is only his cloud-facing identity.
+> **Why do this?** Entra ID doesn't know what `corp.local` is - it's a private, non-routable domain. The cloud UPN suffix tells Entra Connect how to map on-prem users to cloud identities. John can still log in locally as `CORP\john`. The UPN is only his cloud-facing identity.
 
 ### Step 9: Install Entra Connect
 
-On **MS01** (not DC01 — Microsoft recommends installing Entra Connect on a separate server):
+On **MS01** (not DC01 - Microsoft recommends installing Entra Connect on a separate server):
 
 1. Disable IE Enhanced Security first:
 ```powershell
@@ -372,7 +372,7 @@ Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Active Setup\Installed Componen
 7. Select **Password Hash Synchronization** → Next
 8. **Entra ID credentials:** `admin@YourTenant.onmicrosoft.com` (the account you created in Step 7)
 
-> **CRITICAL:** Use the same UPN in both the username field AND the login popup. Do not use your personal Gmail/Outlook email — use the native Entra ID admin account. This is the most common failure point.
+> **CRITICAL:** Use the same UPN in both the username field AND the login popup. Do not use your personal Gmail/Outlook email - use the native Entra ID admin account. This is the most common failure point.
 
 9. **AD credentials:** select **Use existing AD account** → `CORP\Administrator`
 10. Domain/OU Filtering: check only the **HybridCloud** OU
@@ -390,7 +390,7 @@ Go to Azure portal → **Entra ID** → **Users**. You should see John Smith, Sa
 
 ---
 
-## Phase 3 — Cloud Infrastructure with Terraform
+## Phase 3 - Cloud Infrastructure with Terraform
 
 ### Step 11: Install Prerequisites
 
@@ -481,7 +481,7 @@ kubectl config get-contexts
 
 ---
 
-## Phase 4 — Kubernetes App, RBAC, and OAuth2 Proxy
+## Phase 4 - Kubernetes App, RBAC, and OAuth2 Proxy
 
 ### Step 15: Configure Entra ID App Registration
 
@@ -609,14 +609,14 @@ Repeat TLS cert generation, secrets, and deployment for all three clusters.
 
 ---
 
-## Phase 5 — Testing
+## Phase 5 - Testing
 
 1. On CLIENT01, log in as `CORP\john`
 2. Open browser and visit `https://YOUR-AKS-IP`
 3. Accept the certificate warning (self-signed)
 4. Entra ID login page appears → sign in as `john@YourTenant.onmicrosoft.com`
 5. Dashboard shows: Azure AKS, John's email, Developer (Read-Only)
-6. Visit AWS and GCP URLs — SSO session means no re-login needed
+6. Visit AWS and GCP URLs - SSO session means no re-login needed
 7. Sign out → sign in as Sarah → shows Admin (Full Access)
 
 ---
@@ -625,7 +625,7 @@ Repeat TLS cert generation, secrets, and deployment for all three clusters.
 
 ### 1. UPN Suffix Mismatch for Cloud Sync
 
-Active Directory users were created with `@corp.local` UPN suffixes, which cannot be synchronized to Entra ID because `.local` is a non-routable private domain. The forest required an alternative UPN suffix matching the Azure tenant domain (`Mahadikvallabh587gmail.onmicrosoft.com` — the UPN is long because I used the free pre-defined domain by Microsoft and did not buy a custom domain; it would be much shorter like `hybridcorp.com` if I did). This was added through Active Directory Domains and Trusts, and each user's UPN was manually updated through the Account tab in their properties.
+Active Directory users were created with `@corp.local` UPN suffixes, which cannot be synchronized to Entra ID because `.local` is a non-routable private domain. The forest required an alternative UPN suffix matching the Azure tenant domain (`Mahadikvallabh587gmail.onmicrosoft.com` - the UPN is long because I used the free pre-defined domain by Microsoft and did not buy a custom domain; it would be much shorter like `hybridcorp.com` if I did). This was added through Active Directory Domains and Trusts, and each user's UPN was manually updated through the Account tab in their properties.
 
 ### 2. Entra Connect Tenant Mismatch
 
@@ -633,7 +633,7 @@ The first several Entra Connect installation attempts failed with error AADSTS70
 
 ### 3. Entra ID Free Tier Group Assignment Limitation
 
-The Entra ID free tier does not support assigning security groups to enterprise applications. When configuring the AWS SAML federation app, only individual user assignment was available. The RBAC logic on the Kubernetes side still uses group Object IDs from the token claims, so permission enforcement was unaffected — but in the real world, enterprises use paid tiers where group assignment works. Without group assignment at scale, managing hundreds of users per application becomes impractical.
+The Entra ID free tier does not support assigning security groups to enterprise applications. When configuring the AWS SAML federation app, only individual user assignment was available. The RBAC logic on the Kubernetes side still uses group Object IDs from the token claims, so permission enforcement was unaffected - but in the real world, enterprises use paid tiers where group assignment works. Without group assignment at scale, managing hundreds of users per application becomes impractical.
 
 ### 4. HTTPS Requirement for OAuth2 Proxy Redirect URIs
 
@@ -646,9 +646,9 @@ Entra ID's app registration UI blocks HTTP redirect URIs (requiring HTTPS or loc
 | Layer | Technology | Purpose |
 |---|---|---|
 | Infrastructure as Code | Terraform >= 1.5 | Provision all cloud resources declaratively |
-| Cloud — Azure | AKS | Kubernetes with native Entra ID RBAC |
-| Cloud — AWS | EKS | Kubernetes with OIDC provider for Entra ID |
-| Cloud — GCP | GKE (private cluster) | Kubernetes with Workload Identity |
+| Cloud - Azure | AKS | Kubernetes with native Entra ID RBAC |
+| Cloud - AWS | EKS | Kubernetes with OIDC provider for Entra ID |
+| Cloud - GCP | GKE (private cluster) | Kubernetes with Workload Identity |
 | Identity Provider | Microsoft Entra ID | SSO, OIDC tokens, group membership claims |
 | Auth Gateway | oauth2-proxy v7+ | Enforces Entra ID login, manages sessions |
 | TLS | Self-signed certs (OpenSSL) | HTTPS with IP SANs |
