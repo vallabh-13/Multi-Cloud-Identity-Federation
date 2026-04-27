@@ -12,7 +12,7 @@ A production-pattern lab that provisions three Kubernetes clusters across **Azur
 
 | Azure AKS | AWS EKS | GCP GKE |
 |---|---|---|
-| ! | ![AWS Dashboard](screenshots/aws-dashboard.png) | ![GCP Dashboard](screenshots/gcp-dashboard.png) |
+| ![Azure Dashboard](screenshots/AKS.png) | ![AWS Dashboard](screenshots/EKS.png) | ![GCP Dashboard](screenshots/GCP.png) |
 
 Each dashboard shows the authenticated user's identity, their RBAC role (Admin or Developer), and which cloud the app is running on - all controlled by a single Active Directory group membership.
 
