@@ -1,0 +1,32 @@
+---
+# OAuth2 Proxy — HTTPS-only on port 443 with self-signed TLS cert.
+# Pre-requisites:
+#   Secret    oauth2-proxy-secret  (client-id, client-secret, cookie-secret)
+#   Secret    oauth2-proxy-tls     (tls.crt, tls.key)
+#   ConfigMap oauth2-proxy-config  (redirect-url)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: oauth2-proxy
+  namespace: hybrid-cloud-app
+spec:
+  replicas: 1
+  template:
+    spec:
+      containers:
+        - name: oauth2-proxy
+          image: quay.io/oauth2-proxy/oauth2-proxy:latest
+          args:
+            - --provider=oidc
+            - --oidc-issuer-url=https://login.microsoftonline.com/<YOUR_TENANT_ID>/v2.0
+            - --login-url=https://login.microsoftonline.com/<YOUR_TENANT_ID>/oauth2/v2.0/authorize
+            - --redeem-url=https://login.microsoftonline.com/<YOUR_TENANT_ID>/oauth2/v2.0/token
+            - --oidc-jwks-url=https://login.microsoftonline.com/<YOUR_TENANT_ID>/discovery/v2.0/keys
+            - --oidc-groups-claim=groups
+            - --scope=openid email profile
+            - --email-domain=*
+            - --https-address=0.0.0.0:443
+            - --tls-cert-file=/etc/tls/tls.crt
+            - --tls-key-file=/etc/tls/tls.key
+            - --upstream=http://nginx-internal.hybrid-cloud-app.svc.cluster.local:80
+            - --ssl-insecure-skip-verify

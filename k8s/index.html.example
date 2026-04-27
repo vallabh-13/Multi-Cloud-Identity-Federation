@@ -1,0 +1,12 @@
+<!-- Template for index.html - Replace <YOUR_TENANT_ID> with your Entra ID Tenant ID -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Hybrid Cloud Identity Portal</title>
+</head>
+<body>
+    <header>
+        <a href="/oauth2/sign_out?rd=https%3A%2F%2Flogin.microsoftonline.com%2F<YOUR_TENANT_ID>%2Foauth2%2Fv2.0%2Flogout">Sign out</a>
+    </header>
+</body>
+</html>

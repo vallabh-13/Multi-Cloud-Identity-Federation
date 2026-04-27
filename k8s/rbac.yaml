@@ -1,0 +1,66 @@
+# Kubernetes RBAC for Hybrid Cloud Identity Federation
+# Maps Entra ID group memberships to Kubernetes permissions on EKS, AKS, and GKE.
+#
+# BEFORE APPLYING: Replace placeholder group object IDs with the real Entra ID
+# group object IDs from:
+#   Azure Portal → Entra ID → Groups → [group name] → Overview → Object ID
+#
+# Apply to each cluster after setting the correct kubeconfig context:
+#   kubectl config use-context <cluster-context>
+#   kubectl apply -f k8s/rbac.yaml
+
+---
+# ── ClusterRole: Cloud Admins (full cluster access) ───────────────────────────
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: cloud-admin-role
+rules:
+  - apiGroups: ["*"]
+    resources: ["*"]
+    verbs: ["*"]
+
+---
+# ── ClusterRole: Cloud Developers (read-only access) ─────────────────────────
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: cloud-developer-role
+rules:
+  - apiGroups: [""]
+    resources: ["pods", "services", "pods/log"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["apps"]
+    resources: ["deployments", "replicasets"]
+    verbs: ["get", "list", "watch"]
+
+---
+# ── ClusterRoleBinding: Cloud-Admins Entra ID Group → cloud-admin-role ────────
+# The subject name must be the Entra ID group object ID (a UUID), not the display name.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: cloud-admins-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cloud-admin-role
+subjects:
+  - apiGroup: rbac.authorization.k8s.io
+    kind: Group
+    name: "604f9a9d-bc5e-4f53-8829-64e124fed42a"
+
+---
+# ── ClusterRoleBinding: Cloud-Developers Entra ID Group → cloud-developer-role ─
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: cloud-developers-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cloud-developer-role
+subjects:
+  - apiGroup: rbac.authorization.k8s.io
+    kind: Group
+    name: "d3fda806-1e22-4cc4-a493-31ca0e6f115c"

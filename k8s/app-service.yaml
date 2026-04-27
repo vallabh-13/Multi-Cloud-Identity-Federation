@@ -1,0 +1,33 @@
+---
+# Internal ClusterIP — oauth2-proxy upstream target (plain HTTP, no TLS).
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-internal
+  namespace: hybrid-cloud-app
+spec:
+  type: ClusterIP
+  selector:
+    app: nginx-dashboard
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+
+---
+# External LoadBalancer — HTTPS 443 → oauth2-proxy:443 (TLS served by the proxy).
+# oauth2-proxy then talks to nginx-internal:80 over plain HTTP inside the cluster.
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-dashboard
+  namespace: hybrid-cloud-app
+spec:
+  type: LoadBalancer
+  selector:
+    app: oauth2-proxy
+  ports:
+    - protocol: TCP
+      port: 443
+      targetPort: 443
+      name: https

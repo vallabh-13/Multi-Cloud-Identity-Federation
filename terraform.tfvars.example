@@ -1,0 +1,22 @@
+# Hybrid Cloud Identity Federation — Example Variables
+# Copy this file to terraform.tfvars and fill in your real values.
+# terraform.tfvars is git-ignored — never commit it.
+
+project_name = "hybrid-cloud-identity"
+environment  = "lab"
+
+# Microsoft Entra ID (Azure AD)
+entra_tenant_id = "your-entra-tenant-id-here"
+entra_domain    = "your-org.onmicrosoft.com"
+
+# AWS
+aws_region = "us-east-1"
+
+# Azure
+azure_subscription_id     = "your-azure-subscription-id-here"
+azure_region              = "East US"
+azure_resource_group_name = "hybrid-cloud-identity-rg"
+
+# GCP
+gcp_project_id = "your-gcp-project-id-here"
+gcp_region     = "us-central1"

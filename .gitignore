@@ -1,0 +1,50 @@
+# ── Terraform ──────────────────────────────────────────────────────────────────
+.terraform/
+*.tfstate
+*.tfstate.backup
+*.tfvars
+*.tfplan
+crash.log
+.terraformrc
+terraform.rc
+
+# Override files (local dev overrides — never commit)
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# ── Secrets & Credentials ──────────────────────────────────────────────────────
+.env
+*.env.*
+*.key
+*.pem
+*.p12
+*.pfx
+*.crt
+*.cer
+credentials.json
+service-account*.json
+*secret*
+*credential*
+
+# ── Kubeconfig ─────────────────────────────────────────────────────────────────
+kubeconfig
+kubeconfig*
+*.kubeconfig
+
+# ── OS / Editor ────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.vscode/
+.idea/
+
+# ── Local Project Specifics (Hardcoded IDs) ────────────────────────────────────
+k8s/oauth2-proxy.yaml
+k8s/index.html
+
+# ── Logs & Temp ────────────────────────────────────────────────────────────────
+*.log
+/tmp/
